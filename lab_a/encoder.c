@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
             range_end = 'z';
         } else {
             range_start = range_end = 0;
-        }
+        } 
 
         if (range_start != 0) {
             new_curr = curr + (sign * key[pos]); 
