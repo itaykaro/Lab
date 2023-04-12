@@ -103,13 +103,25 @@ link* load_signatures(char* fileName) {
     }
     return ret;
 }
-
-void print_signatures(link* virus_list, FILE* output) {
-    printf("not implemented\n");
+void PrintHex(const unsigned char* buffer, size_t length) {
+    FILE* file = fopen("checkk.txt", "wb");
+    for (size_t i = 0; i < length; i++) {
+        fprintf(file, "%02X ", buffer[i]);
+    }
+    printf("\n");
 }
-
-void detect_viruses() {
-    printf("not implemented\n");
+void detect_viruses(char *buffer, unsigned int size, link *virus_list) {
+    link* curr_link = virus_list;
+    while (curr_link != NULL) {
+        int index = 0;
+        while (index + curr_link->vir->SigSize <= size) {
+            if (memcmp(buffer + index, curr_link->vir->sig, curr_link->vir->SigSize) == 0) {
+                printf("Virus found!\nIn byte: %d\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
+            }
+            index++;
+        }
+        curr_link = curr_link->nextVirus;
+    }
 }
 
 void fix_file() {
@@ -118,6 +130,33 @@ void fix_file() {
 
 int main(int argc, char* argv[]) { 
 
+    FILE* fp;
+    unsigned char* buffer;
+    size_t filesize;
+    
+    // Check if the user provided a file name as a command line argument
+    if (argc < 2) {
+        printf("No file provided");
+        return 1;
+    }
+
+    fp = fopen(argv[1], "rb");
+    
+    // find file size
+    fseek(fp, 0L, SEEK_END);
+    filesize = ftell(fp);
+    rewind(fp);
+    
+    buffer = (unsigned char*) malloc(10000);
+    
+    // read file to buffer
+    if (fread(buffer, sizeof(unsigned char), filesize, fp) != filesize) {
+        printf("Error: Unable to read the file.\n");
+        free(buffer);
+        fclose(fp);
+        return 1;
+    }
+
     char* menu[] = {"Load signatures",
                     "Print signatures", 
                     "Detect viruses",
@@ -125,7 +164,7 @@ int main(int argc, char* argv[]) {
                     "Quit"};
                 
     link* virus_list = NULL;
-    
+
     while(1) {
 
         int i;
@@ -155,7 +194,8 @@ int main(int argc, char* argv[]) {
                 break;
 
             case 3:
-                detect_viruses();
+            PrintHex(buffer, filesize);
+                detect_viruses(buffer, filesize, virus_list);
                 break;
 
             case 4:
@@ -163,6 +203,8 @@ int main(int argc, char* argv[]) {
                 break;
 
             case 5:
+                free(buffer);
+                fclose(fp);
                 return 0;
 
             default:
@@ -171,5 +213,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    free(buffer);
+    fclose(fp);
     return 0;
 }
