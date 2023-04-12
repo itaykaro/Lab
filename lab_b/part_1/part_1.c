@@ -103,13 +103,7 @@ link* load_signatures(char* fileName) {
     }
     return ret;
 }
-void PrintHex(const unsigned char* buffer, size_t length) {
-    FILE* file = fopen("checkk.txt", "wb");
-    for (size_t i = 0; i < length; i++) {
-        fprintf(file, "%02X ", buffer[i]);
-    }
-    printf("\n");
-}
+
 void detect_viruses(char *buffer, unsigned int size, link *virus_list) {
     link* curr_link = virus_list;
     while (curr_link != NULL) {
@@ -194,7 +188,6 @@ int main(int argc, char* argv[]) {
                 break;
 
             case 3:
-            PrintHex(buffer, filesize);
                 detect_viruses(buffer, filesize, virus_list);
                 break;
 
