@@ -101,6 +101,7 @@ link* load_signatures(char* fileName) {
     while (ftell(fp) != filesize) {
         ret = list_append(ret, readVirus(fp));
     }
+    fclose(fp);
     return ret;
 }
 
@@ -118,8 +119,41 @@ void detect_viruses(char *buffer, unsigned int size, link *virus_list) {
     }
 }
 
-void fix_file() {
-    printf("not implemented\n");
+void neutralize_virus(char *fileName, int signatureOffset) {
+    // return;
+    FILE* fp = fopen(fileName, "rb+");
+    printf("CLEANING");
+    // return;
+    if (fp == NULL) {
+        fprintf(stderr, "Failed to open file\n");
+        return;
+    }
+    fseek(fp, 0L, SEEK_END);
+    if (ftell(fp) < signatureOffset) {
+        fprintf(stderr, "Invalid offset\n %d, %d", ftell(fp), signatureOffset);
+        return;
+    }
+    rewind(fp);
+    fseek(fp, signatureOffset, SEEK_SET);
+    unsigned char byte = 0xC3;
+    fwrite(&byte, 1, 1, fp);
+    printf("CLEANED!!! %d", signatureOffset);
+    fclose(fp);
+}
+
+void fix_file(char* fileName, char *buffer, unsigned int size, link *virus_list) {
+    link* curr_link = virus_list;
+    while (curr_link != NULL) {
+        int index = 0;
+        while (index + curr_link->vir->SigSize <= size) {
+            if (memcmp(buffer + index, curr_link->vir->sig, curr_link->vir->SigSize) == 0) {
+                //printf("Virus found!\nIn byte: %d\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
+                neutralize_virus(fileName, index);
+            }
+            index++;
+        }
+        curr_link = curr_link->nextVirus;
+    }
 }
 
 int main(int argc, char* argv[]) { 
@@ -134,7 +168,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    fp = fopen(argv[1], "rb");
+    char* infectedFileNane = argv[1];
+
+    fp = fopen(infectedFileNane, "rb");
     
     // find file size
     fseek(fp, 0L, SEEK_END);
@@ -150,7 +186,8 @@ int main(int argc, char* argv[]) {
         fclose(fp);
         return 1;
     }
-
+    fclose(fp);
+    
     char* menu[] = {"Load signatures",
                     "Print signatures", 
                     "Detect viruses",
@@ -192,7 +229,7 @@ int main(int argc, char* argv[]) {
                 break;
 
             case 4:
-                fix_file();
+                fix_file(infectedFileNane, buffer, filesize, virus_list);
                 break;
 
             case 5:
@@ -207,6 +244,5 @@ int main(int argc, char* argv[]) {
     }
 
     free(buffer);
-    fclose(fp);
     return 0;
 }
