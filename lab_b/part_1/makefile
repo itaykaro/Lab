@@ -1,10 +1,10 @@
-all: part_1
+all: AntiVirus
 
-part_1.o: part_1.c
-	gcc -g -m32 -Wall -c part_1.c
+AntiVirus.o: AntiVirus.c
+	gcc -g -m32 -Wall -c AntiVirus.c
 
-part_1: part_1.o
-	gcc -g -m32 -Wall -o part_1 part_1.o
+AntiVirus: AntiVirus.o
+	gcc -g -m32 -Wall -o AntiVirus AntiVirus.o
 
 clean:
-	rm *.o part_1
+	rm *.o AntiVirus
