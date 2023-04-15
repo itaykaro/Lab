@@ -73,6 +73,7 @@ void list_free(link *virus_list) {
         link* next_link = curr_link->nextVirus;
         free(curr_link->vir->sig);
         free(curr_link->vir);
+        free(curr_link);
         curr_link = next_link;
     }
 }
@@ -241,8 +242,8 @@ int main(int argc, char* argv[]) {
                 break;
 
             case 5:
+                list_free(virus_list);
                 free(buffer);
-                fclose(fp);
                 return 0;
 
             default:
@@ -251,6 +252,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    list_free(virus_list);
     free(buffer);
     return 0;
 }
