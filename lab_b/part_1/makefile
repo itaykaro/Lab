@@ -1,10 +1,10 @@
-all: AntiVirus
+all: virusDetector
 
 AntiVirus.o: AntiVirus.c
 	gcc -g -m32 -Wall -c AntiVirus.c
 
-AntiVirus: AntiVirus.o
-	gcc -g -m32 -Wall -o AntiVirus AntiVirus.o
+virusDetector : AntiVirus.o
+	gcc -g -m32 -Wall -o virusDetector AntiVirus.o
 
 clean:
-	rm *.o AntiVirus
+	rm *.o virusDetector 
