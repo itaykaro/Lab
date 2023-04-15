@@ -13,7 +13,7 @@ struct link {
     virus *vir;
 };
 typedef struct link link;
-
+int status = 0;
 
 virus* readVirus(FILE* fp) {
     virus* ret;
@@ -41,6 +41,10 @@ void printVirus(virus* virus, FILE* output) {
 }
 
 void list_print(link *virus_list, FILE* output) {
+    if (status < 1) {
+        fprintf(stderr, "\nYou must load signatures first!\n");
+        return;
+    }
     link* curr_link = virus_list;
     while(curr_link != NULL) {
         curr_link->vir = curr_link->vir;
@@ -78,12 +82,17 @@ void list_free(link *virus_list) {
     }
 }
 
-link* load_signatures(char* fileName) {
+link* load_signatures() {
+    status = 0;
+    char fileName[256];
+    printf("File name: ");
+    fgets(fileName, sizeof(fileName), stdin);
+    fileName[strlen(fileName)-1]='\0';
+
     link* ret = NULL;
-
     char endian[4];
-
     long filesize;
+    
     FILE* fp = fopen(fileName, "rb");
     if (fp == NULL) {
         fprintf(stderr, "Failed to open file\n");
@@ -102,10 +111,16 @@ link* load_signatures(char* fileName) {
         ret = list_append(ret, readVirus(fp));
     }
     fclose(fp);
+    status = 1;
     return ret;
 }
 
 void detect_viruses(unsigned char *buffer, unsigned int size, link *virus_list) {
+    if (status < 1) {
+        fprintf(stderr, "\nYou must load signatures first!\n");
+        return;
+    } 
+    status = 2;
     link* curr_link = virus_list;
     while (curr_link != NULL) {
         int index = 0;
@@ -134,11 +149,14 @@ void neutralize_virus(char *fileName, int signatureOffset) {
     fseek(fp, signatureOffset, SEEK_SET);
     unsigned char byte = 0xC3;
     fwrite(&byte, 1, 1, fp);
-    printf("\nFixed!\n");
     fclose(fp);
 }
 
 void fix_file(char* fileName, unsigned char *buffer, unsigned int size, link *virus_list) {
+    if (status < 2) {
+        fprintf(stderr, "\nYou must detect viruses first!\n");
+        return;
+    } 
     link* curr_link = virus_list;
     while (curr_link != NULL) {
         int index = 0;
@@ -150,6 +168,7 @@ void fix_file(char* fileName, unsigned char *buffer, unsigned int size, link *vi
         }
         curr_link = curr_link->nextVirus;
     }
+    printf("\nFixed!\n");
 }
 
 int main(int argc, char* argv[]) { 
@@ -188,7 +207,6 @@ int main(int argc, char* argv[]) {
     "Quit"};
                 
     link* virus_list = NULL;
-    int status = 0;
 
     while(1) {
 
@@ -208,37 +226,19 @@ int main(int argc, char* argv[]) {
 
         switch (choice) {
             case 1:
-                char filename[100];
-                fgets(filename, sizeof(filename), stdin);
-                filename[strlen(filename)-1]='\0';
-                virus_list = load_signatures(filename);
-                status = (virus_list == NULL) ? 0 : 1;
+                virus_list = load_signatures();
                 break;
             
             case 2:
-                if (status < 1) {
-                    fprintf(stderr, "\nYou must load signatures first!\n");
-                } else {
-                    list_print(virus_list, stdout);
-                }
+                list_print(virus_list, stdout);
                 break;
 
             case 3:
-                if (status < 1) {
-                    fprintf(stderr, "\nYou must load signatures first!\n");
-                } else {
-                    detect_viruses(buffer, filesize, virus_list);
-                    status = 2;
-                }
+                detect_viruses(buffer, filesize, virus_list);
                 break;
 
             case 4:
-                if (status < 2) {
-                    fprintf(stderr, "\nYou must detect viruses first!\n");
-                } else {
-                    fix_file(infectedFileNane, buffer, filesize, virus_list);
-                }
-                
+                fix_file(infectedFileNane, buffer, filesize, virus_list);
                 break;
 
             case 5:
