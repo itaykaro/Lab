@@ -50,7 +50,7 @@ void list_print(link *virus_list, FILE* output) {
 }
 
 link* list_append(link* virus_list, virus* data) {
-    virus* nextVirus = NULL;
+    link* nextVirus = NULL;
     link* newLink = malloc(sizeof(data) + sizeof(nextVirus));
     newLink->nextVirus = nextVirus;
     newLink->vir = data;
@@ -80,7 +80,7 @@ void list_free(link *virus_list) {
 link* load_signatures(char* fileName) {
     link* ret = NULL;
 
-    unsigned char* endian[1];
+    char endian[4];
 
     long filesize;
     FILE* fp = fopen(fileName, "rb");
@@ -92,9 +92,8 @@ link* load_signatures(char* fileName) {
     filesize = ftell(fp);
     rewind(fp);
 
-    FILE* output = fopen("text.txt", "wb"); 
-    fread(endian, 4, 1, fp);
-    if (strcmp(endian, "VISL") != 0) {
+    fread(endian, 1, 4, fp);
+    if (memcmp(endian, "VISL", 4) != 0) {
         fprintf(stderr, "invalid signature file\n");
         return NULL;
     }
@@ -105,7 +104,7 @@ link* load_signatures(char* fileName) {
     return ret;
 }
 
-void detect_viruses(char *buffer, unsigned int size, link *virus_list) {
+void detect_viruses(unsigned char *buffer, unsigned int size, link *virus_list) {
     link* curr_link = virus_list;
     while (curr_link != NULL) {
         int index = 0;
@@ -130,7 +129,7 @@ void neutralize_virus(char *fileName, int signatureOffset) {
     }
     fseek(fp, 0L, SEEK_END);
     if (ftell(fp) < signatureOffset) {
-        fprintf(stderr, "Invalid offset\n %d, %d", ftell(fp), signatureOffset);
+        fprintf(stderr, "Invalid offset\n %ld, %d", ftell(fp), signatureOffset);
         return;
     }
     rewind(fp);
@@ -141,7 +140,7 @@ void neutralize_virus(char *fileName, int signatureOffset) {
     fclose(fp);
 }
 
-void fix_file(char* fileName, char *buffer, unsigned int size, link *virus_list) {
+void fix_file(char* fileName, unsigned char *buffer, unsigned int size, link *virus_list) {
     link* curr_link = virus_list;
     while (curr_link != NULL) {
         int index = 0;
