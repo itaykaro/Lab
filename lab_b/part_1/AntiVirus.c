@@ -110,7 +110,7 @@ void detect_viruses(unsigned char *buffer, unsigned int size, link *virus_list) 
         int index = 0;
         while (index + curr_link->vir->SigSize <= size) {
             if (memcmp(buffer + index, curr_link->vir->sig, curr_link->vir->SigSize) == 0) {
-                printf("Virus found!\nIn byte: %d\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
+                printf("\nVirus found!\nIn byte: %d\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
             }
             index++;
         }
@@ -119,10 +119,7 @@ void detect_viruses(unsigned char *buffer, unsigned int size, link *virus_list) 
 }
 
 void neutralize_virus(char *fileName, int signatureOffset) {
-    // return;
     FILE* fp = fopen(fileName, "rb+");
-    printf("CLEANING");
-    // return;
     if (fp == NULL) {
         fprintf(stderr, "Failed to open file\n");
         return;
@@ -136,7 +133,7 @@ void neutralize_virus(char *fileName, int signatureOffset) {
     fseek(fp, signatureOffset, SEEK_SET);
     unsigned char byte = 0xC3;
     fwrite(&byte, 1, 1, fp);
-    printf("CLEANED!!! %d", signatureOffset);
+    printf("\nFixed!\n");
     fclose(fp);
 }
 
@@ -146,7 +143,6 @@ void fix_file(char* fileName, unsigned char *buffer, unsigned int size, link *vi
         int index = 0;
         while (index + curr_link->vir->SigSize <= size) {
             if (memcmp(buffer + index, curr_link->vir->sig, curr_link->vir->SigSize) == 0) {
-                //printf("Virus found!\nIn byte: %d\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
                 neutralize_virus(fileName, index);
             }
             index++;
@@ -161,7 +157,6 @@ int main(int argc, char* argv[]) {
     unsigned char* buffer;
     size_t filesize;
     
-    // Check if the user provided a file name as a command line argument
     if (argc < 2) {
         printf("No file provided");
         return 1;
@@ -170,17 +165,15 @@ int main(int argc, char* argv[]) {
     char* infectedFileNane = argv[1];
 
     fp = fopen(infectedFileNane, "rb");
-    
-    // find file size
+    // file size
     fseek(fp, 0L, SEEK_END);
     filesize = ftell(fp);
     rewind(fp);
     
     buffer = (unsigned char*) malloc(10000);
     
-    // read file to buffer
     if (fread(buffer, sizeof(unsigned char), filesize, fp) != filesize) {
-        printf("Error: Unable to read the file.\n");
+        fprintf(stderr, "Unable to read the file.\n");
         free(buffer);
         fclose(fp);
         return 1;
@@ -188,12 +181,13 @@ int main(int argc, char* argv[]) {
     fclose(fp);
     
     char* menu[] = {"Load signatures",
-                    "Print signatures", 
-                    "Detect viruses",
-                    "Fix file",
-                    "Quit"};
+    "Print signatures", 
+    "Detect viruses",
+    "Fix file",
+    "Quit"};
                 
     link* virus_list = NULL;
+    int status = 0;
 
     while(1) {
 
@@ -217,18 +211,33 @@ int main(int argc, char* argv[]) {
                 fgets(filename, sizeof(filename), stdin);
                 filename[strlen(filename)-1]='\0';
                 virus_list = load_signatures(filename);
+                status = (virus_list == NULL) ? 0 : 1;
                 break;
             
             case 2:
-                list_print(virus_list, stdout);
+                if (status < 1) {
+                    fprintf(stderr, "\nYou must load signatures first!\n");
+                } else {
+                    list_print(virus_list, stdout);
+                }
                 break;
 
             case 3:
-                detect_viruses(buffer, filesize, virus_list);
+                if (status < 1) {
+                    fprintf(stderr, "\nYou must load signatures first!\n");
+                } else {
+                    detect_viruses(buffer, filesize, virus_list);
+                    status = 2;
+                }
                 break;
 
             case 4:
-                fix_file(infectedFileNane, buffer, filesize, virus_list);
+                if (status < 2) {
+                    fprintf(stderr, "\nYou must detect viruses first!\n");
+                } else {
+                    fix_file(infectedFileNane, buffer, filesize, virus_list);
+                }
+                
                 break;
 
             case 5:
