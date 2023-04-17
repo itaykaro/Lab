@@ -126,7 +126,7 @@ void detect_viruses(unsigned char *buffer, unsigned int size, link *virus_list) 
         int index = 0;
         while (index + curr_link->vir->SigSize <= size) {
             if (memcmp(buffer + index, curr_link->vir->sig, curr_link->vir->SigSize) == 0) {
-                printf("\nVirus found!\nIn byte: %d\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
+                printf("\nVirus found!\nIn byte: 0x%02X\nVirus name: %s\nSignature size: %d\n", index, curr_link->vir->virusName, curr_link->vir->SigSize);
             }
             index++;
         }
