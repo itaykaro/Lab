@@ -9,4 +9,5 @@ myshell.o: myshell.c
 LineParser.o: LineParser.c LineParser.h
 	gcc -g -m32 -Wall -o LineParser.o LineParser.c LineParser.h
 
-clean: rm *.o myshell
+clean: 
+	rm *.o myshell
